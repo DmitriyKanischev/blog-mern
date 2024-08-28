@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import { registerValidator } from "./validators/auth.js";
 import UserModel from "./models/user.js"
+import checkAuth from "./utils/checkAuth.js";
 
 mongoose
     .connect(process.env.db)
@@ -17,8 +18,46 @@ mongoose
 const app = express();
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send('Hello')
+//Authentication
+app.post("/login", async (req, res) => {
+    try {
+        const user = await UserModel.findOne({email: req.body.email});
+
+        if(!user) {
+            return res.status(404).json({
+                message: "Authentication failed"
+            })
+        }
+
+        const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
+        if(!isValidPass) {
+            return res.status(400).json({
+                message: "Invalid login or password"
+            })
+        }
+    
+        const token = jwt.sign(
+            {
+                _id: user._id,
+            },
+            "secretKey123",
+            {
+                expiresIn: "30d"
+            }
+        )
+        const {passwordHash, ...userData} = user._doc;
+        res.json({
+            ...userData,
+            token,
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Authentication failed"
+        })
+    }
+
+
 })
 app.post("/registration", registerValidator, async (req, res) => {
    try { const errors = validationResult(req);
@@ -59,6 +98,28 @@ app.post("/registration", registerValidator, async (req, res) => {
             message: 'Не удалось зарегестрироваться'
         })
     }
+})
+app.get("/me", checkAuth, async (req, res) => {
+    try {
+        const user = await UserModel.findById(req.userId);
+
+        if(!user) {
+            return res.status(404).json({
+                message: "User not found"
+            })
+        }
+        const {passwordHash, ...userData} = user._doc;
+        res.json({
+            ...userData,
+        })
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+
+app.get("/", (req, res) => {
+    res.send('Hello')
 })
 
 app.listen(4444, (err) => {
