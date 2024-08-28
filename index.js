@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
     res.send('Hello')
 })
 app.post("/registration", registerValidator, async (req, res) => {
-    const errors = validationResult(req);
+   try { const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json(errors.array())
     }
@@ -29,16 +29,36 @@ app.post("/registration", registerValidator, async (req, res) => {
     //Password encryption 
     const password = req.body.password;
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const passHash = await bcrypt.hash(password, salt);
 
     //Create new user
     const doc = new UserModel({
         email: req.body.email,
         fullName: req.body.fullName,
-        passwordHash: passwordHash
+        passwordHash: passHash
     })
     const user = await doc.save();
-    res.json(user)
+    const token = jwt.sign(
+        {
+        _id: user._id,
+        },
+        "secretKey123",
+        {
+            expiresIn: "30d"
+        }
+    );
+    //separate the password hash
+    const {passwordHash, ...userData} = user._doc;
+    res.json({
+        ...userData,
+        token,
+    })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({
+            message: 'Не удалось зарегестрироваться'
+        })
+    }
 })
 
 app.listen(4444, (err) => {
