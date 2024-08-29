@@ -6,3 +6,8 @@ export const registerValidator = [
     body('fullName', "Name 3 characters min").isLength({min: 3, }),
     body('avatarUrl', "Not valid link").optional().isURL(),
 ]
+
+export const loginValidator = [
+    body('email', "Ivalid email").isEmail(),
+    body('password', "Password min 5, max 32 character").isLength({min: 5, max: 32}),
+]
