@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import multer from "multer";
 import 'dotenv/config';
 
 import { loginValidator, registerValidator } from "./validators/auth.js";
@@ -15,19 +16,39 @@ mongoose
 
 
 const app = express();
+
+//Storage for upload images
+const storage = multer.diskStorage({
+    destination: (_, __, cb) => {
+        cb(null, 'uploads')
+    },
+    filename: (_, file, cb) => {
+        cb(null, file.originalname)
+    }
+});
+
+const upload = multer({storage});
+/////////////////////////////////
+
+
 app.use(express.json());
-
+app.use('/upload', express.static('uploads'));
 //Authentication
-app.post("/login", loginValidator, authController.login)
-app.post("/registration", registerValidator, authController.registration)
-app.get("/me", checkAuth, authController.getMe)
+app.post("/login", loginValidator, authController.login);
+app.post("/registration", registerValidator, authController.registration);
+app.get("/me", checkAuth, authController.getMe);
 
+app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
+    res.json({
+        url: `/upload/${req.file.originalname}`
+    })
+})
 //Posts
 app.post("/create-post", checkAuth, postCreateValidation, postController.create);
 app.get('/posts', postController.getAll);
 app.get('/posts/:id', postController.getOne);
 app.delete('/posts/:id', checkAuth, postController.remove);
-app.patch('/posts/:id', checkAuth, postController.update)
+app.patch('/posts/:id', checkAuth, postCreateValidation, postController.update);
 
 app.get("/", (req, res) => {
     res.send('Hello')
