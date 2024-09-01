@@ -2,7 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import multer from "multer";
 import 'dotenv/config';
-
+import cors from "cors";
 import { loginValidator, registerValidator } from "./validators/auth.js";
 import { postCreateValidation } from "./validators/posts.js";
 import {authController, postController} from "./controllers/index.js";
@@ -31,6 +31,7 @@ const upload = multer({storage});
 
 
 app.use(express.json());
+app.use(cors())
 app.use('/upload', express.static('uploads'));
 //Authentication
 app.post("/login", loginValidator, handleValidationError, authController.login);
