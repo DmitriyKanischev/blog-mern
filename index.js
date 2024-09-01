@@ -5,10 +5,8 @@ import 'dotenv/config';
 
 import { loginValidator, registerValidator } from "./validators/auth.js";
 import { postCreateValidation } from "./validators/posts.js";
-import checkAuth from "./utils/checkAuth.js";
-import * as authController from "./controllers/authControllers.js";
-import * as postController from "./controllers/postsControllers.js";
-import handleValidationError from "./utils/handleValidationError.js";
+import {authController, postController} from "./controllers/index.js";
+import {checkAuth, handleValidationError} from "./utils/index.js";
 
 mongoose
     .connect(process.env.db)
