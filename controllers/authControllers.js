@@ -52,7 +52,8 @@ export const registration = async (req, res) => {
      const doc = new UserModel({
          email: req.body.email,
          fullName: req.body.fullName,
-         passwordHash: passHash
+         passwordHash: passHash,
+         avatarUrl: "http://localhost:4444/upload/base-avatar.png"
      })
      const user = await doc.save();
      const token = jwt.sign(
